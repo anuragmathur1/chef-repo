@@ -1,0 +1,39 @@
+
+server {
+    listen  <%=@http_port%>;
+    server_name  <%=@server_name%>;
+    root <%=@nginx_root%>;
+
+    #charset koi8-r;
+    #access_log  <%=@nginx_access_log%>  main;
+
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+
+    # location ~ .php$ {
+    location / {
+
+      include fastcgi_params;
+      fastcgi_split_path_info ^(.+?\.php)(/.*)$;
+        if (!-f $document_root$fastcgi_script_name) {
+          return 404;
+        }
+
+      # Mitigate https://httpoxy.org/ vulnerabilities
+      fastcgi_param HTTP_PROXY "";
+
+      # fastcgi_pass php;
+      fastcgi_pass unix:/var/run/php5-fpm.sock;
+      fastcgi_index <%=@fastcgi_index%> ;
+     }
+
+
+      location ~/\.ht {
+      deny all;
+    }
+
+}

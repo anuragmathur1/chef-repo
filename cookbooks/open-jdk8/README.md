@@ -1,4 +1,4 @@
-# chef-repo
+# open-jdk8
 
 TODO: Enter the cookbook description here.
 

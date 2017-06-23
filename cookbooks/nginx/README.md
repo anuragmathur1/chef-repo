@@ -1,4 +1,4 @@
-# chef-repo
+# nginx
 
 TODO: Enter the cookbook description here.
 
