@@ -1,0 +1,109 @@
+input {
+  beats {
+    tags => "beats"
+    port => 5044
+  }
+}
+filter {
+    # Apache Access Logs
+    if [type] == "apache_access" or [type] == "apache_access_legacy" {
+        grok {
+            # from "Elmo_Combined" style.
+            # "61.69.94.162, 10.0.0.193" 127.0.0.1 - - [20/Jun/2017:14:36:23 +1000] "GET /dashboard/api/v0/leave-request/management-info/2 HTTP/1.1" 200 751 657 1408 0 tony01.dev.elmodev.com "https://tony01.dev.elmodev.com/dashboard/leave/my/leave-requests" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36" "/dashboard/api/v0/leave-request/management-info/2" 451185 "WUimR8zkIPUJn7dKffTSbgAAAAQ"
+            match => {"message" => "\"(?<elmolog.request.x_forwarded_for>%{IP:elmolog.request.client_ip}(?:, %{IP:elmolog.request.loadbalancer_ip}(?:, .*)?)?)\" %{IPORHOST:elmolog.request.remote_host} %{USER:elmolog.request.user_ident} %{USER:elmolog.request.user_auth} \[%{HTTPDATE:elmolog.request.timestamp}\] \"%{WORD:elmolog.request.method} %{NOTSPACE:elmolog.request.url} HTTP/%{NUMBER:elmolog.request.http_version}\" %{NUMBER:elmolog.response.status:int} %{NUMBER:elmolog.request.bytes:int} %{NUMBER:elmolog.response.bytes:int} %{NUMBER:elmolog.transfered.bytes:int} %{NUMBER:elmolog.response.duration.sec:int} %{NOTSPACE:elmolog.server.hostname} \"%{NOTSPACE:elmolog.request.referer}\" %{QUOTEDSTRING:elmolog.request.user_agent} \"%{NOTSPACE:elmolog.request.path}\" %{NUMBER:elmolog.response.duration.usec:int} \"%{NOTSPACE:elmolog.request.id}\"" }
+            add_field => {
+                # convert the apache response status to the elmolog.level, same as the application elmolog.level
+                "elmolog.level" => "%{elmolog.response.status}"
+            }
+        }
+        geoip {
+          source => "elmolog.client_ip"
+          target => "geoip"
+          database => "/etc/logstash/GeoLite2-City.mmdb"
+          add_field => [ "[elmolog][geoip][coordinates]", "%{[elmolog][geoip][longitude]}" ]
+          add_field => [ "[elmolog][geoip][coordinates]", "%{[elmolog][geoip][latitude]}"  ]
+        }
+        mutate {
+          convert => [ "[elmolog][geoip][coordinates]", "float"]
+        }
+        # 15/Jun/2017:03:12:11 +0000, genearte a general log original timestamp
+        date {
+            match => [ "[elmolog.request.timestamp]", "dd/MMM/yyyy:HH:mm:ss Z" ]
+            target => "elmolog.timestamp"
+            locale => "en"
+        }
+    }
+    # Apache Error Logs
+    else if [type] == "apache_error" or [type] == "apache_error_legacy" {
+        grok {
+            # [Tue Apr 18 22:27:10.272077 2017] [mpm_prefork:notice] [pid 13] AH00171: Graceful restart requested, doing restart
+            match => {"message" => "\[%{HTTPDATE:elmolog.request.timestamp}\] \[%{LOGLEVEL:elmolog.level_name}\] (?:\[client %{IPORHOST:elmolog.request.ip}\] ){0,1}%{GREEDYDATA:elmolog.message}" }
+        }
+        # Tue Apr 18 22:27:10.272077 2017, genearte a general log original timestamp
+        date {
+            match => [ "[elmolog.request.timestamp]", "EEE MMM dd HH:mm:ss.SSSSSS yyyy" ]
+            target => "elmolog.timestamp"
+            locale => "en"
+        }
+    }
+    # App JSON Logs
+    else if [type] == "app" or [type] == "app_legacy" {
+        json {
+            source => "message"
+            target => "elmolog"
+        }
+        #yyyy-MM-dd HH:mm:ss.SSSSSS, genearte a general log original timestamp
+        date {
+            match => [ "[elmolog][datetime][date]", "yyyy-MM-dd HH:mm:ss.SSSSSS" ]
+            timezone => "%{[elmolog][datetime][timezone]}"
+            target => "elmolog.timestamp"
+            locale => "en"
+        }
+    }
+}
+output {
+  elasticsearch {
+    hosts => ["elasticsearch:9200"]
+    index => "logstash-%{+YYYY.MM.dd}"
+    user => elastic
+    # put the right role password
+    password => changeme
+  }
+  #back up to S3
+  if [type] == "apache_access" {
+      s3 {
+          bucket => <%=@apache_access_bucket%>
+          region => <%=@region%>
+          size_file => 1048576 # 1M bytes
+          restore => true
+          time_file => 5
+          codec => line {format => "%{message}"}
+          prefix => "apache_access_%{+YYYY_MM_dd}"
+      }
+  }
+  else if [type] == "apache_error" {
+      s3 {
+          bucket => <%=@apache_error_bucket%>
+          region => <%=@region%>
+          size_file => 1048576 # 1M bytes
+          restore => true
+          time_file => 5
+          codec => line {format => "%{message}"}
+          prefix => "apache_error_%{+YYYY_MM_dd}"
+      }
+  }
+  else if [type] == "app" {
+      s3 {
+        bucket => <%=@app_log_bucket%>
+        region => <%=@region%>
+        size_file => 1048576 # 1M bytes
+        restore => true
+        time_file => 5
+        codec => line {format => "%{elmolog}"}
+        prefix => "app_%{+YYYY_MM_dd}"
+      }
+  }
+  stdout {
+    codec => rubydebug
+  }
+}
