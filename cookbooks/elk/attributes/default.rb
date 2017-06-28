@@ -1,5 +1,8 @@
 default['elk']['version'] = "5.x"
 default['elasticsearch']['home'] = '/usr/share/elasticsearch/'
+default['elasticsearch']['version'] = '5.4.3-1'
+default['kibana']['version'] = '5.4.3-1'
+default['logstash']['version'] = '5.4.3-1'
 
 default['logs']['web_access']['bucket'] = 'monitor-elmo-dev'
 default['logs']['web_error']['bucket'] = 'monitor-elmo-dev'
@@ -7,6 +10,7 @@ default['logs']['app']['bucket'] = 'monitor-elmo-dev'
 
 default['logstash']['reload_automatic'] = 'true'
 default['logstash']['reload_interval'] = '3'
+default['logstash']['logdir'] = '/var/log/logstash'
 
 default['es']['cluster']['name'] = 'elmo-elk-cluster'
 default['es']['cluster']['ip'] = '0.0.0.0'

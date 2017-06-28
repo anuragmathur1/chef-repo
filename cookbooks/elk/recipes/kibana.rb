@@ -1,4 +1,5 @@
 package "kibana" do
+  version node['kibana']['version']
   action :install
 end
 

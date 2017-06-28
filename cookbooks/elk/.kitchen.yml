@@ -1,33 +1,12 @@
 ---
 driver:
-  name: ec2
-  aws_ssh_key_id: elmodev
-  region: ap-southeast-2
-  availability_zone: ap-southeast-2a
-  require_chef_omnibus: true
-  instance_type: t2.small
-  iam_profile_name: Elmo-Sydney-Web-Dev
-  subnet_id: subnet-635bf015
-  associate_public_ip: true
-  shared_credentials_profile: elmodev
-  security_group_ids: ["sg-112bc376", "sg-132bc374", "sg-292ec64e"]
-  tags:
-    Name: "test-kitchen"
-
-transport:
-  ssh_key: /Users/ningningwang/Documents/elmodev.com.pem
-  username: ec2-user
-
+  name: vagrant
+  customize:
+    memory: 4096
+    cpus: 2
 
 provisioner:
-  name: chef_solo
-
-platforms:
-  - name: amazon
-    driver:
-      image_id: ami-8bf2fde8
-      transport.username: ec2-user
-
+  name: chef_zero
   # You may wish to disable always updating cookbooks in CI or other testing environments.
   # For example:
   #   always_update_cookbooks: <%= !ENV['CI'] %>
@@ -37,8 +16,8 @@ verifier:
   name: inspec
 
 platforms:
-  - name: ubuntu-16.04
-  - name: centos-7.3
+#  - name: ubuntu-16.04
+  - name: centos-6.7
 
 suites:
   - name: default
@@ -48,6 +27,3 @@ suites:
       inspec_tests:
         - test/smoke/default
     attributes:
-        general:
-            api_domain: core.elmodev.com
-            timezone: Australia/Sydney

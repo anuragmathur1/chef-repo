@@ -1,4 +1,5 @@
 package "logstash" do
+  version node['logstash']['version']
   action :install
 end
 

@@ -1,4 +1,5 @@
 package "elasticsearch" do
+  version node['elasticsearch']['version']
   action :install
 end
 
@@ -22,6 +23,7 @@ template "/etc/elasticsearch/jvm.options" do
 end
 
 execute "es-x-pack" do
+  ignore_failure true
   command '/usr/share/elasticsearch/bin/elasticsearch-plugin install x-pack --batch'
 end
 
