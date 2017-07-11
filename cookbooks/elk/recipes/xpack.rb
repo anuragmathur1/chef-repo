@@ -1,28 +1,14 @@
-# package "expect" do
-#   action :install
-# end
-
-# bash "es-x-pack" do
-#
-#   code <<-EOF
-#
-#     /usr/bin/expect -c 'spawn /usr/share/elasticsearch/bin/elasticsearch-plugin install x-pack
-#     expect "Continue with installation"
-#     send "y\r"
-#     expect "Continue with installation"
-#     send "y\r"
-#     expect eof'
-#     EOF
-#   end
-
-# execute "es-x-pack" do
-#   command '/usr/share/elasticsearch/bin/elasticsearch-plugin install x-pack --batch'
-# end
-
 execute "kibana-x-pack" do
+  not_if { Dir.exist?("/usr/share/kibana/plugins/x-pack")}
+  ignore_failure true
   command '/usr/share/kibana/bin/kibana-plugin install x-pack'
+
+  notifies :restart, 'service[kibana]'
 end
 
 execute "logstash-x-pack" do
+  ignore_failure true
   command '/usr/share/logstash/bin/logstash-plugin install x-pack'
+
+  notifies :restart, 'service[logstash]'
 end

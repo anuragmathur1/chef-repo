@@ -63,7 +63,7 @@ filter {
 }
 output {
   elasticsearch {
-    hosts => ["elasticsearch:9200"]
+    hosts => ["<%=@elasticsearch_host%>:9200"]
     index => "logstash-%{+YYYY.MM.dd}"
     user => elastic
     # put the right role password
@@ -71,9 +71,9 @@ output {
   }
   #back up to S3
   if [type] == "apache_access" {
-      s3 {
-          bucket => <%=@apache_access_bucket%>
-          region => <%=@region%>
+      s3{
+          bucket => "<%=@apache_access_bucket%>"
+          region => "<%=@region%>"
           size_file => 1048576 # 1M bytes
           restore => true
           time_file => 5
@@ -82,9 +82,9 @@ output {
       }
   }
   else if [type] == "apache_error" {
-      s3 {
-          bucket => <%=@apache_error_bucket%>
-          region => <%=@region%>
+      s3{
+          bucket => "<%=@apache_error_bucket%>"
+          region => "<%=@region%>"
           size_file => 1048576 # 1M bytes
           restore => true
           time_file => 5
@@ -93,9 +93,9 @@ output {
       }
   }
   else if [type] == "app" {
-      s3 {
-        bucket => <%=@app_log_bucket%>
-        region => <%=@region%>
+      s3{
+        bucket => "<%=@app_log_bucket%>"
+        region => "<%=@region%>"
         size_file => 1048576 # 1M bytes
         restore => true
         time_file => 5

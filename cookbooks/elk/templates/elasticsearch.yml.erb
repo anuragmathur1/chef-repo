@@ -100,16 +100,16 @@ xpack.security.enabled: true # enable the security, logstash and kibana need use
 xpack.watcher.enabled: true
 
 
-xpack.notification.email.account:
-    gmail_account:
-        profile: gmail
-        smtp:
-            auth: true
-            starttls.enable: true
-            host: smtp.gmail.com
-            port: <%=@xpack_notification_port%>
-            user: <%=@xpack_notification_username%>
-            password: <%=@xpack_notification_password%>
+# xpack.notification.email.account:
+#     gmail_account:
+#         profile: <%=@xpack_notification_profile%>
+#         smtp:
+#             auth: true
+#             starttls.enable: true
+#             host: <%=@xpack_notification_host%>
+#             port: <%=@xpack_notification_port%>
+#             user: <%=@xpack_notification_username%>
+#             password: <%=@xpack_notification_password%>
 
 # xpack.notification.slack:
 #   account:

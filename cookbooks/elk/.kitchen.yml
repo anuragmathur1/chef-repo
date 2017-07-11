@@ -1,29 +1,37 @@
----
 driver:
-  name: vagrant
-  customize:
-    memory: 4096
-    cpus: 2
+  name: ec2
+  aws_ssh_key_id: sydney-work
+  region: ap-southeast-2
+  availability_zone: ap-southeast-2a
+  require_chef_omnibus: true
+  instance_type: t2.large
+  iam_profile_name: Elmo-Sydney-ELK
+  subnet_id: subnet-53c2b637
+  associate_public_ip: true
+  shared_credentials_profile: default
+  security_group_ids: ["subnet-53c2b637"]
+  tags:
+    Name: "test-ELK"
+
+transport:
+  ssh_key: /Users/anuragmathur/Documents/AWS/KeyPair/sydney-work.pem
+  username: ec2-user
 
 provisioner:
-  name: chef_zero
-  # You may wish to disable always updating cookbooks in CI or other testing environments.
-  # For example:
-  #   always_update_cookbooks: <%= !ENV['CI'] %>
-  always_update_cookbooks: true
-
-verifier:
-  name: inspec
+  name: chef_solo
 
 platforms:
-#  - name: ubuntu-16.04
-  - name: centos-6.7
+  - name: amazon
+    driver:
+      image_id: ami-8bf2fde8
+      transport.username: ec2-user
 
 suites:
   - name: default
     run_list:
       - recipe[elk::default]
-    verifier:
-      inspec_tests:
-        - test/smoke/default
+
     attributes:
+        general:
+            #api_domain: core.elmodev.com
+            timezone: Australia/Sydney
